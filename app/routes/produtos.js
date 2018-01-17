@@ -22,19 +22,26 @@ module.exports = function(app) {
     app.get('/produtos', listaProdutos);
 
     app.get('/produtos/form', function(req, res) {
-        res.render('produtos/form');
+        res.render('produtos/form', {errosValidacao: {}, produto: {}});
     });
 
     app.post('/produtos', function(req, res) {
         var produto = req.body;
 
-        var validadorTitulo = req.assert('titulo', 'Titulo Obrigatório');
-        validadorTitulo.notEmpty();
+        req.assert('titulo', 'Titulo Obrigatório').notEmpty();
+        req.assert('preco', 'Formato inválido').isFloat();
 
-        var errors = req.validationErrors();
+        var erros = req.validationErrors();
         
-        if(errors){
-            console.log(errors);
+        if(erros){
+            res.format({
+                html: function(){
+                    res.status(400).render('produtos/form',{errosValidacao:erros,produto:produto});
+                },
+                json: function(){
+                    res.status(400).json(erros);
+                }
+            });
             return;
         } 
 
